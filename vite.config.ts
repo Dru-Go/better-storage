@@ -13,7 +13,9 @@ export default defineConfig({
     },
   },
   test: {},
-  plugins: [dts({
-    insertTypesEntry: true,
-  })],
+  plugins: [
+    dts({
+      insertTypesEntry: true,
+    }),
+  ],
 });

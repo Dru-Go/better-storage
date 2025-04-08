@@ -1,10 +1,10 @@
 {
-  "name": "ts-npm-package-boilerplate",
+  "name": "better-storage",
   "version": "0.0.0",
   "type": "module",
   "author": {
-    "name": "Aaron Rackley",
-    "email": "aaron.rackley9@gmail.com"
+    "name": "Dera Adugna",
+    "email": "deamking@icloud.com"
   },
   "main": "./dist/my-lib.umd.cjs",
   "module": "./dist/my-lib.js",
@@ -21,12 +21,14 @@
     "preview": "vite preview",
     "test": "vitest",
     "coverage": "vitest run --coverage",
-    "lint": "eslint . --ext .ts",
-    "lint-and-fix": "eslint . --ext .ts --fix",
-    "pretty": "prettier --write \"src/**/*.ts\"",
+    "lint": "npx @biomejs/biome lint .",
+    "lint-and-fix": "npx @biomejs/biome lint --write .",
+    "pretty": "npx @biomejs/biome format --write .",
     "clean-up": "npm run lint-and-fix & npm run pretty"
   },
   "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/mime-types": "^2.1.4",
     "@vitest/coverage-c8": "^0.33.0",
     "eslint": "^8.49.0",
     "prettier": "^3.0.3",
@@ -36,14 +38,14 @@
     "vite-plugin-eslint": "^1.8.1",
     "vitest": "^0.34.4"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.7.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.28.1",
-    "vite-plugin-dts": "^3.5.3"
+    "fs-extra": "^11.3.0",
+    "mime-types": "^3.0.1",
+    "vite-plugin-dts": "^4.5.3"
   }
 }
