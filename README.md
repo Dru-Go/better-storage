@@ -3,7 +3,13 @@
 > A flexible, testable, and extensible file storage abstraction for Node.js, inspired by Laravel’s `Storage` facade.
 
 ---
+# TypeScript Storage System
 
+[![Build Status](https://img.shields.io/github/actions/workflow/status/Dru-Go/https://github.com/Dru-Go/better-storage/ci.yml?branch=main&style=flat-square)](https://github.com/Dru-Go/https://github.com/Dru-Go/better-storage/actions)
+[![Coverage Status](https://img.shields.io/codecov/c/github/Dru-Go/https://github.com/Dru-Go/better-storage/main?style=flat-square)](https://codecov.io/gh/Dru-Go/https://github.com/Dru-Go/better-storage)
+[![License](https://img.shields.io/github/license/Dru-Go/https://github.com/Dru-Go/better-storage?style=flat-square)](./LICENSE)
+[![npm version](https://img.shields.io/npm/v/ts-storage?style=flat-square)](https://www.npmjs.com/package/ts-storage)
+---
 ## 💡 Why This Exists
 
 Every application handles files — but few handle them *well*. Whether you’re uploading user avatars, streaming video, or managing document archives, local filesystem logic quickly becomes tangled and hard to maintain.
