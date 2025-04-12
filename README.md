@@ -98,7 +98,7 @@ This project is under active development!
 - 🔜 Week 3: More robust error handling, edge cases, cloud drivers.
 
 If you want to follow the design decisions, check out the accompanying blog series:
-> ["Building a Laravel-Inspired Storage System in TypeScript"](https://yourblog.link) *(coming soon!)*
+> ["Building a Laravel-Inspired Storage System in TypeScript"](https://world-rose.vercel.app/) *(coming soon!)*
 
 ---
 
