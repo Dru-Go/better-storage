@@ -12,7 +12,9 @@ export default defineConfig({
       fileName: 'my-lib',
     },
   },
-  test: {},
+  test: {
+    testTimeout: 10000
+  },
   plugins: [
     dts({
       insertTypesEntry: true,
