@@ -26,22 +26,22 @@ export class FakeDriver implements StorageDriver {
     return `fake://${path}`;
   }
 
-  getMetadata(filePath: string): Promise<FileMetadata> {
+  getMetadata(_filePath: string): Promise<FileMetadata> {
     throw new Error("Method not implemented.");
   }
-  setVisibility(filePath: string, visibility: "public" | "private"): Promise<void> {
+  setVisibility(_filePath: string, _visibility: "public" | "private"): Promise<void> {
     throw new Error("Method not implemented.");
   }
-  getVisibility(filePath: string): Promise<"public" | "private"> {
+  getVisibility(_filePath: string): Promise<"public" | "private"> {
     throw new Error("Method not implemented.");
   }
-  getSignedUrl(filePath: string, expiresInSeconds: number): Promise<string> {
+  getSignedUrl(_filePath: string, _expiresInSeconds: number): Promise<string> {
     throw new Error("Method not implemented.");
   }
-  readStream(filePath: string): Promise<Readable> {
+  readStream(_filePath: string): Promise<Readable> {
     throw new Error("Method not implemented.");
   }
-  writeStream(filePath: string, stream: Readable, visibility?: "public" | "private"): Promise<void> {
+  writeStream(_filePath: string, _stream: Readable, _visibility?: "public" | "private"): Promise<void> {
     throw new Error("Method not implemented.");
   }
 
