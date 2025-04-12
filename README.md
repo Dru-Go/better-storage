@@ -1,102 +1,122 @@
-# ts-npm-package-boilerplate
-This repo is a template for quickly getting a Typescript npm package up and running.
+# 🎒 TypeScript Storage System — A Laravel-Inspired File Storage Layer
 
-This example project exports a package for adding and subtract numbers. 
+> A flexible, testable, and extensible file storage abstraction for Node.js, inspired by Laravel’s `Storage` facade.
 
-To get started you can delete everything inside the src folder except for index.ts, this is the entry point for the package.
+---
 
-> When you are ready to build this package, make sure you search for the phrase 'my-lib' and replace this with the name of your package.
+## 💡 Why This Exists
 
-## Tech Stack
+Every application handles files — but few handle them *well*. Whether you’re uploading user avatars, streaming video, or managing document archives, local filesystem logic quickly becomes tangled and hard to maintain.
 
-- Vite
-- Vitest 
-- Typescript
+Laravel solved this beautifully with its **Storage system** — providing a consistent, elegant API no matter the underlying storage driver.
 
-It includes test examples using vite test
+This project brings that same idea to the JavaScript/TypeScript world.
 
+---
 
-# COMMANDS
-## run build for local dist testing
-npm run build
+## ⚙️ Features
 
-## run tests
-npm run test
+✅ Clean, driver-based architecture.  
+✅ Easy swapping between local, S3, or custom storage backends.  
+✅ Metadata-first: access size, mime, visibility, and more.  
+✅ Stream support for large files.  
+✅ Signed URL scaffolding for secure temporary access.  
+✅ Customizable path generation strategies.  
+✅ Thoughtful, real-world tested — designed for production use.
 
-## check test coverage
-npm run coverage
+---
 
-## build npm release package
-npm pack
+## 🏗️ Current Drivers
 
-## Dry run the npm release package
-npm pack --dry-run
+- **Local Disk** (`fs-extra`) — fully tested.
+- (Pluggable: more coming soon!)
 
-## run eslint 
-npm run lint
+---
 
-## run and fix eslint issues found
-npm run lint-and-fix
+## 🧠 Mental Model
 
-## run prettier on your files
-npm run pretty
+This isn’t just another wrapper around `fs`.  
+It’s a mental model: 
 
-## clean up the codebase by runnning eslint and prettier
-npm run clean-up
+**“Store and retrieve files the same way — no matter where they live.”**
 
-
-## Semantic Release
-This project already has semantic-release as a dependecy. To get the full benifits of this all commit messages should be in the format it requires. You can see that in their readme [here](https://github.com/semantic-release/semantic-release)
-
-The next step is for your CI to be setup to use semantic-release. You can read how to do that [here](https://github.com/semantic-release/semantic-release/blob/HEAD/docs/usage/getting-started.md#getting-started)
-
-# Things to know when publishing your package to github.
-
-1. Set up your repository url inside your package.json set up correctly. 
-
-```
-"repository": {
-    "type": "git",
-    "url": "https://github.com/ageddesi/vite-ts-package-starter.git"
-  },
+```ts
+const file = await Storage.disk('local').get('profile.jpg');
+await Storage.disk('s3').put('backups/data.zip', Buffer.from('my-data'));
 ```
 
-2. Update publishConfig so it is pointing to the github package repository
+---
+
+## 📂 Example Folder Structure
 
 ```
-"publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
+src/
+├─ config/
+│  └─ disks.ts               # Disk definitions (local, s3, custom)
+├─ drivers/
+│  ├─ StorageDriver.ts       # Core interface
+│  └─ LocalStorageDriver.ts  # Local disk implementation
+├─ StorageManager.ts         # Disk registry & entry point
+├─ path-generators/
+│  ├─ DatePathGenerator.ts
+│  └─ UserPathGenerator.ts
+└─ index.ts                  # Export your public API
 ```
 
-3. If you are part of an organization on github, make sure you have that organization alias in your package.json name eg.
+---
 
+## 🧪 Testing Philosophy
+
+This project is built with an emphasis on:
+
+- **Real-world edge cases:** slow streams, broken uploads, visibility mismatches.
+- **TypeScript-first design:** to catch structural mistakes early.
+- **Flexible, clear mocks and fakes** to simulate different storage behaviors.
+
+---
+
+## 🚀 Quick Example
+
+```ts
+import { Storage } from './StorageManager';
+
+const buffer = Buffer.from('Hello world');
+await Storage.disk('local').put('test/hello.txt', buffer);
+
+const contents = await Storage.disk('local').get('test/hello.txt');
+console.log(contents.toString()); // "Hello world"
 ```
-"name": "@org-alias/ts-npm-package-boilerplate",
-```
 
-If you are also using our github workflow to publish the package, you will need to update the registry defintion with the scope. 
+---
 
-Replace.
+## 🔥 Work in Progress
 
-```
-with:
-    node-version: 16
-    registry-url: https://npm.pkg.github.com/
-```
+This project is under active development!
 
-with
+- ✔️ Week 1: Local driver, metadata structure, storage registry.
+- ✔️ Week 2: Streaming, signed URLs, path generators.
+- 🔜 Week 3: More robust error handling, edge cases, cloud drivers.
 
-```
-with:
-    node-version: 16
-    registry-url: https://npm.pkg.github.com/
-    scope: '@org-alias/'
-```
+If you want to follow the design decisions, check out the accompanying blog series:
+> ["Building a Laravel-Inspired Storage System in TypeScript"](https://yourblog.link) *(coming soon!)*
 
+---
 
-4. If you are using our workflow to build and deploy to github you will need to first create a secret key and attach it to your repo with the following name.
+## 💡 Contributing
 
-```
-secrets.GITHUB_TOKEN
-```
+Feedback, questions, and suggestions are welcome — especially if you’ve hit real-world storage problems in Node apps before.
+
+---
+
+## 🧾 License
+
+MIT — use it freely, just don’t blame me if your files vanish in a black hole.
+
+---
+
+If you like, I can also help you:
+- write a crisp `package.json` `description` and keywords for npm,
+- prepare badges for GitHub (build, coverage, license),
+- and write an installation section.
+
+Want me to draft those too?
