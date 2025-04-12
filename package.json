@@ -1,7 +1,22 @@
 {
-  "name": "better-storage",
-  "version": "0.0.0",
-  "type": "module",
+  "name": "ts-storage",
+  "version": "1.0.0",
+  "description": "A Laravel-inspired file storage abstraction for TypeScript. Swap local, cloud, and custom drivers with a clean, unified API.",
+  "keywords": [
+    "storage",
+    "file-storage",
+    "typescript",
+    "nodejs",
+    "laravel",
+    "driver",
+    "filesystem",
+    "uploads",
+    "streams",
+    "signed-urls",
+    "path-generator",
+    "cloud-storage",
+    "local-storage"
+  ],
   "author": {
     "name": "Dera Adugna",
     "email": "deamking@icloud.com"
