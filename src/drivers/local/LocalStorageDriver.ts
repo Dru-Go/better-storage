@@ -5,28 +5,30 @@ import { StorageDriver } from '../../core/StorageDriver';
 import { FileMetadata } from './metadata';
 import { Readable } from 'stream';
 import { PathGenerator } from '../../core/PathGenerator';
+import { log } from 'npmlog';
 
+type Visibility = 'public' | 'private' | 'test';
 type LocalDriverConfig = {
   root: string;
   baseUrl?: string,
-  visibility?: 'public' | 'private';
+  visibility?: Visibility;
 };
 
 export class LocalStorageDriver implements StorageDriver {
   private root: string;
   private baseUrl?: string
-  private defaultVisibility: 'public' | 'private';
+  private defaultVisibility: Visibility;
 
   constructor(config: LocalDriverConfig) {
     this.root = config.root;
     this.baseUrl = config.baseUrl;
-    this.defaultVisibility = config.visibility ?? 'private';
+    this.defaultVisibility = config.visibility ?? 'public';
   }
 
 
 
   async delete(filePath: string): Promise<void> {
-    for (const visibility of ['public', 'private'] as const) {
+    for (const visibility of ['public', 'private', 'test'] as const) {
       const targetPath = this.resolvePath(filePath, visibility);
       if (await this.exists(filePath, visibility)) {
         await fs.unlink(targetPath);
@@ -35,7 +37,7 @@ export class LocalStorageDriver implements StorageDriver {
     }
   }
 
-  async exists(filePath: string, visibility: 'public' | 'private' = 'public', pathGen?: PathGenerator): Promise<boolean> {
+  async exists(filePath: string, visibility: Visibility = 'public', pathGen?: PathGenerator): Promise<boolean> {
     const targetPath = this.resolvePath(filePath, visibility, pathGen);
     try {
       await fs.access(targetPath);
@@ -46,7 +48,7 @@ export class LocalStorageDriver implements StorageDriver {
   }
 
   async getMetadata(filePath: string): Promise<FileMetadata> {
-    for (const visibility of ['public', 'private'] as const) {
+    for (const visibility of ['public', 'private', 'test'] as const) {
       const targetPath = this.resolvePath(filePath, visibility);
       if (await this.exists(filePath, visibility)) {
         const stats = await fs.stat(targetPath);
@@ -62,7 +64,7 @@ export class LocalStorageDriver implements StorageDriver {
     throw new Error(`File not found for metadata: ${filePath}`);
   }
 
-  async setVisibility(filePath: string, visibility: 'public' | 'private'): Promise<void> {
+  async setVisibility(filePath: string, visibility: Visibility): Promise<void> {
     const current = await this.getMetadata(filePath);
     if (current.visibility === visibility) return; // no change
 
@@ -73,7 +75,7 @@ export class LocalStorageDriver implements StorageDriver {
     await fs.rename(sourcePath, targetPath);
   }
 
-  async getVisibility(filePath: string): Promise<'public' | 'private'> {
+  async getVisibility(filePath: string): Promise<Visibility> {
     const metadata = await this.getMetadata(filePath);
     return metadata.visibility;
   }
@@ -94,7 +96,7 @@ export class LocalStorageDriver implements StorageDriver {
     return `/storage/private/${filePath}?signature=${token}&expires=${expiresAt}`;
   }
 
-  public resolvePath(originalName: string, visibility: 'public' | 'private' = "public", generator?: PathGenerator): string {
+  public resolvePath(originalName: string, visibility: Visibility = "public", generator?: PathGenerator): string {
     const logicalPath = this.resolveFilePath(originalName, generator);
     const targetVisibility = visibility ?? this.defaultVisibility;
     return path.join(this.root, targetVisibility, logicalPath);
@@ -108,7 +110,7 @@ export class LocalStorageDriver implements StorageDriver {
   }
 
   async read(filePath: string): Promise<Buffer> {
-    for (const visibility of ['public', 'private'] as const) {
+    for (const visibility of ['public', 'private', 'test'] as const) {
       const targetPath = this.resolvePath(filePath, visibility);
       if (await this.exists(filePath, visibility)) {
         return fs.readFile(targetPath);
@@ -117,7 +119,7 @@ export class LocalStorageDriver implements StorageDriver {
     throw new Error(`File not found: ${filePath}`);
   }
   async readStream(filePath: string): Promise<Readable> {
-    for (const visibility of ['public', 'private'] as const) {
+    for (const visibility of ['public', 'private', "test"] as const) {
       const targetPath = this.resolvePath(filePath, visibility);
       if (await this.exists(filePath, visibility)) {
         return createReadStream(targetPath);
@@ -126,14 +128,20 @@ export class LocalStorageDriver implements StorageDriver {
     throw new Error(`File not found: ${filePath}`);
   }
 
-  async write(filePath: string, content: Buffer | string, visibility: 'public' | 'private' = "public", pathGen?: PathGenerator): Promise<void> {
+  async write(filePath: string, content: Buffer | string, visibility = this.defaultVisibility, pathGen?: PathGenerator): Promise<void> {
+    if (visibility === 'public') {
+      this.ensurePublicSymlink();
+    }
     const targetPath = this.resolvePath(filePath, visibility, pathGen);
     await fs.mkdir(path.dirname(targetPath), { recursive: true });
     await fs.writeFile(targetPath, content);
   }
 
 
-  async writeStream(filePath: string, stream: Readable, visibility: 'public' | 'private' = 'public', pathGen?: PathGenerator): Promise<void> {
+  async writeStream(filePath: string, stream: Readable, visibility = this.defaultVisibility, pathGen?: PathGenerator): Promise<void> {
+    if (visibility === 'public') {
+      this.ensurePublicSymlink();
+    }
     const fullPath = this.resolvePath(filePath, visibility, pathGen);
     await fs.ensureDir(path.dirname(fullPath));  // Auto-create directories
 
@@ -163,5 +171,47 @@ export class LocalStorageDriver implements StorageDriver {
         resolve();
       });
     });
+  }
+
+  async getPublicUrl(filePath: string, baseUrl: string, visibility: Visibility = 'public'): Promise<string> {
+    const finalVisibility = visibility ?? this.defaultVisibility;
+
+    if (finalVisibility !== 'public') {
+      return "";  // Or throw new Error('File is not public')
+    }
+
+    // Mimic Laravel: /public/storage/file.ext -> your base URL + path
+    return `${baseUrl}/${filePath.replace(/\\/g, '/')}`;
+  }
+
+  public async ensurePublicSymlink(publicDirectory?: string, storagePublic?: string, symLinkPath?: string) {
+    const publicDir = publicDirectory || path.resolve(__dirname, '../../../public');
+    const storageAppPublic = storagePublic || path.resolve(__dirname, '../../../public/storage/');
+    const symlinkPath = symLinkPath || path.join(publicDir, 'symlinks');
+    await fs.ensureDir(publicDir);
+    await fs.ensureDir(storageAppPublic);
+    fs.ensureSymlink(storageAppPublic, symlinkPath);
+    try {
+      if (!fs.existsSync(storageAppPublic)) {
+        log("error", "setupPublicSymlink", `❌ Target folder "${__dirname}" "${storageAppPublic}" does not exist.`);
+        return;
+      }
+
+      if (fs.existsSync(symlinkPath)) {
+        const stats = fs.lstatSync(symlinkPath);
+        if (stats.isSymbolicLink()) {
+          log("warn", "setupPublicSymlink", `✅ Symlink already exists, ${symlinkPath}`);
+          return;
+        } else {
+          log("error", "setupPublicSymlink", `❌ A file or folder already exists at "${symlinkPath}", but it’s not a symlink.`);
+          return;
+        }
+      }
+
+      fs.symlinkSync(storageAppPublic, symlinkPath, 'junction');  // 'junction' for Windows compatibility
+      log("info", "setupPublicSymlink", `✅ Symlink created: ${symlinkPath} → ${storageAppPublic}`);
+    } catch (error) {
+      log("error", "setupPublicSymlink", '❌ Failed to create symlink:', error);
+    }
   }
 }

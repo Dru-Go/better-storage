@@ -1,9 +1,11 @@
 import { StorageDriver } from './StorageDriver';
 import { disks } from '../config';
+type Visibility = 'public' | 'private' | 'test';
 
-export class StorageManager {
+class StorageManager {
   private drivers: Record<string, StorageDriver> = {};
   private defaultDisk = 'local';
+  private static instances: Map<string, StorageDriver> = new Map();
 
   constructor() {
     // Auto-register disks from config
@@ -12,8 +14,28 @@ export class StorageManager {
     }
   }
 
+  static disk(name: string): StorageDriver {
+    if (!disks[name]) {
+      throw new Error(`Disk '${name}' is not defined in config.`);
+    }
+
+    if (!this.instances.has(name)) {
+      const driver = disks[name].driver();
+      this.instances.set(name, driver);
+    }
+
+    return this.instances.get(name)!;
+  }
+
+  static use(name: string): StorageDriver {
+    return this.disk(name);
+  }
+
   register(disk: string, driver: StorageDriver) {
     this.drivers[disk] = driver;
+  }
+  fileMetadata(path: string) {
+    return Storage.disk().getMetadata(path);
   }
 
   disk(diskName?: string): StorageDriver {
@@ -32,6 +54,11 @@ export class StorageManager {
       throw new Error(`Cannot set '${disk}' as default: disk is not registered.`);
     }
     this.defaultDisk = disk;
+  }
+
+  static async url(filePath: string, diskName: string, visibility: Visibility = 'public'): Promise<string | null> {
+    const driver = this.disk(diskName);
+    return await driver.getPublicUrl(filePath, visibility);
   }
 }
 

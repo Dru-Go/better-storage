@@ -1,12 +1,13 @@
 import fs from 'fs-extra';
 import mime from 'mime-types';
 import path from 'path';
+type Visibility = 'public' | 'private' | 'test';
 
 interface FileMetadata {
   path: string; // relative path within the disk
   size: number; // in bytes
   mimeType: string; // e.g. 'image/jpeg'
-  visibility: 'public' | 'private';
+  visibility: Visibility;
   lastModified: Date; // file system or S3 timestamp
 }
 

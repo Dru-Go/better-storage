@@ -23,6 +23,12 @@ const disks: Record<string, DiskConfig> = {
             visibility: 'public'
         }),
     },
+    test: {
+        driver: () => new LocalStorageDriver({
+            root: './tests/storage',
+            visibility: 'test'
+        }),
+    },
 };
 
 

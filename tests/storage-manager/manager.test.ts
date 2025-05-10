@@ -12,4 +12,22 @@ describe('StorageManager', () => {
     it('throws for undefined disk', () => {
         expect(() => Storage.disk('notExist')).toThrow(/Disk 'notExist'/);
     });
+    it('returns metadata for a stored file', async () => {
+        const filename = 'test.txt';
+        const content = 'Hello, world!';
+
+        await Storage.disk().write(filename, content, "public");
+
+        const metadata = await Storage.disk().getMetadata(filename);
+
+        expect(metadata).toMatchObject({
+            path: filename,
+            size: content.length,
+            mimeType: 'text/plain',
+            visibility: 'public',
+        });
+
+        expect(typeof metadata.lastModified).toBe("object");
+    });
 });
+

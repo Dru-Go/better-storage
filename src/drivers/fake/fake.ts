@@ -1,8 +1,10 @@
 import { Readable } from "stream";
 import { StorageDriver } from "../../core/StorageDriver";
 import { FileMetadata } from "../local/metadata";
+type Visibility = 'public' | 'private' | 'test';
 
 export class FakeDriver implements StorageDriver {
+
 
   private files: Map<string, Buffer> = new Map();
 
@@ -29,10 +31,10 @@ export class FakeDriver implements StorageDriver {
   getMetadata(_filePath: string): Promise<FileMetadata> {
     throw new Error("Method not implemented.");
   }
-  setVisibility(_filePath: string, _visibility: "public" | "private"): Promise<void> {
+  setVisibility(_filePath: string, _visibility: Visibility): Promise<void> {
     throw new Error("Method not implemented.");
   }
-  getVisibility(_filePath: string): Promise<"public" | "private"> {
+  getVisibility(_filePath: string): Promise<Visibility> {
     throw new Error("Method not implemented.");
   }
   getSignedUrl(_filePath: string, _expiresInSeconds: number): Promise<string> {
@@ -41,7 +43,11 @@ export class FakeDriver implements StorageDriver {
   readStream(_filePath: string): Promise<Readable> {
     throw new Error("Method not implemented.");
   }
-  writeStream(_filePath: string, _stream: Readable, _visibility?: "public" | "private"): Promise<void> {
+  writeStream(_filePath: string, _stream: Readable, _visibility?: Visibility): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+
+  getPublicUrl(_filePath: string, _visibility: Visibility): Promise<string> {
     throw new Error("Method not implemented.");
   }
 
