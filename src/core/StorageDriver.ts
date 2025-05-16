@@ -4,7 +4,7 @@ import { PathGenerator } from "./PathGenerator";
 type Visibility = 'public' | 'private' | 'test';
 
 export interface StorageDriver {
-  write(filePathOrGenerator: string | PathGenerator, content: Buffer | string, visibility?: 'public' | 'private'): Promise<void>;
+  write(filePathOrGenerator: string | PathGenerator, content: Buffer | string, visibility?: Visibility): Promise<void>;
   read(filePath: string): Promise<Buffer>;
   delete(filePath: string): Promise<void>;
   exists(filePath: string, visibility?: Visibility): Promise<boolean>;
@@ -16,5 +16,5 @@ export interface StorageDriver {
 
   getSignedUrl(filePath: string, expiresInSeconds: number): Promise<string>;
   readStream(filePath: string): Promise<Readable>;
-  writeStream(filePath: string, stream: Readable, visibility?: 'public' | 'private'): Promise<void>;
+  writeStream(filePath: string, stream: Readable, visibility?: Visibility): Promise<void>;
 }

@@ -11,6 +11,16 @@ interface FileMetadata {
   lastModified: Date; // file system or S3 timestamp
 }
 
+export interface UploadSession {
+  id: string;
+  originalName: string;
+  totalChunks: number;
+  receivedChunks: Set<number>;
+  targetPath: string;
+  visibility: Visibility;
+}
+
+
 async function getLocalMetadata(root: string, filePath: string): Promise<FileMetadata> {
   const fullPath = path.join(root, filePath);
   const stat = await fs.stat(fullPath);

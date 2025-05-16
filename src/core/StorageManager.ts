@@ -1,17 +1,22 @@
 import { StorageDriver } from './StorageDriver';
 import { disks } from '../config';
+import { ChunkManager } from './ChuckManager';
+import path from 'path';
+import os from 'os';
+
 type Visibility = 'public' | 'private' | 'test';
 
 class StorageManager {
   private drivers: Record<string, StorageDriver> = {};
   private defaultDisk = 'local';
   private static instances: Map<string, StorageDriver> = new Map();
-
+  private chunkManager: ChunkManager
   constructor() {
     // Auto-register disks from config
     for (const [name, config] of Object.entries(disks)) {
       this.register(name, config.driver());
     }
+    this.chunkManager = new ChunkManager(path.join(os.tmpdir(), 'chunked-uploads'));
   }
 
   static disk(name: string): StorageDriver {
@@ -25,6 +30,10 @@ class StorageManager {
     }
 
     return this.instances.get(name)!;
+  }
+
+  chunk(): ChunkManager {
+    return this.chunkManager;
   }
 
   static use(name: string): StorageDriver {
