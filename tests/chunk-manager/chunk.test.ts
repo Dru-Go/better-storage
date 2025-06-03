@@ -81,8 +81,6 @@ describe('ChunkManager', () => {
     });
 });
 
-
-
 describe('ChunkManager – loadSessionsFromDisk', () => {
     const uploadDir = path.resolve(__dirname, '../tmp/chunks');
     const sessionId = 'session123';

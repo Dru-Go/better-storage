@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { Storage, StorageManager } from '../../src/core/StorageManager';
 import { DatePathGenerator, UserPathGenerator } from '../../src/core/PathGenerator';
 import path from 'path';
+import { SettingDiskError } from '../../src/errors/storage_error';
 describe('StorageManager', () => {
     it('returns a valid driver from config', () => {
         const driver = Storage.disk('local');
@@ -10,7 +11,7 @@ describe('StorageManager', () => {
     });
 
     it('throws for undefined disk', () => {
-        expect(() => Storage.disk('notExist')).toThrow(/Disk 'notExist'/);
+        expect(() => Storage.disk('notExist')).toThrow(SettingDiskError);
     });
     it('returns metadata for a stored file', async () => {
         const filename = 'test.txt';

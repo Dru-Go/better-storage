@@ -26,3 +26,7 @@ dist-ssr
 /tmp
 .env
 /coverage
+*.png
+*.txt
+/public
+/**/storage

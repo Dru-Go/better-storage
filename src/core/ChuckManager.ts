@@ -4,6 +4,7 @@ import { createWriteStream, createReadStream } from 'fs';
 import { Readable } from 'stream';
 import { UploadSession, UploadSessionMetadata, Visibility } from '../types/ChunkUploads';
 import { log } from 'npmlog';
+import { IncompleteUploadError, UploadSessionNotFoundError } from '../errors/storage_error';
 
 export class ChunkManager {
     private sessions: Map<string, UploadSession> = new Map();
@@ -13,21 +14,55 @@ export class ChunkManager {
         this.basePath = uploadDir;
     }
 
-    // Public Simple API (wraps session API)
+    /**
+     * Starts a new upload session by creating necessary metadata and directories.
+     * This is a simplified API that wraps the session-based API.
+     * 
+     * @param uploadId - Unique identifier for the upload session.
+     * @param chunks - Total number of chunks expected.
+     * @param filename - Original filename of the upload.
+     * @param visibility - Visibility setting for the upload.
+     * @returns A promise that resolves when the session is started.
+     */
     async startUpload(uploadId: string, chunks: number, filename: string, visibility: Visibility): Promise<void> {
         const targetPath = path.join(this.basePath, `${uploadId}-${filename}`);
         return this.startSession(uploadId, chunks, filename, targetPath, visibility);
     }
 
+    /**
+    * Appends a chunk of data to an existing upload session.
+    * 
+    * @param uploadId - The upload session identifier.
+    * @param index - The chunk index to append.
+    * @param data - The chunk data, either as a Buffer or a Readable stream.
+    * @returns A promise that resolves when the chunk has been received and saved.
+    */
     async appendChunk(uploadId: string, index: number, data: Buffer | Readable): Promise<void> {
         return this.receiveChunk(uploadId, index, data);
     }
 
+
+    /**
+     * Completes an upload session by assembling all chunks into the final file.
+     * 
+     * @param uploadId - The upload session identifier.
+     * @returns A promise that resolves with the path to the assembled file.
+     */
     async completeUpload(uploadId: string): Promise<string> {
         return this.finalizeUpload(uploadId);
     }
 
-    // Session-Based API
+    /**
+     * Starts a new upload session with detailed parameters.
+     * Creates metadata and ensures the session directory exists.
+     * 
+     * @param id - Unique identifier for the upload session.
+     * @param totalChunks - Total number of chunks expected.
+     * @param originalName - Original filename of the upload.
+     * @param targetPath - Filesystem path where the final file will be stored.
+     * @param visibility - Visibility setting for the upload.
+     * @returns A promise that resolves when the session is started.
+     */
     async startSession(id: string, totalChunks: number, originalName: string, targetPath: string, visibility: Visibility) {
         const session: UploadSession = {
             id,
@@ -59,7 +94,7 @@ export class ChunkManager {
         log("info", "Receiving Chunks", `[Upload ${id}] Progress: ${this.getProgress(id).toFixed(2)}%`);
 
         const session = this.sessions.get(id);
-        if (!session) throw new Error(`Upload session '${id}' not found.`);
+        if (!session) throw new UploadSessionNotFoundError(id);
 
         const chunkPath = this.getChunkPath(id, chunkIndex);
         session.receivedChunks.add(chunkIndex);
@@ -76,6 +111,13 @@ export class ChunkManager {
             await fs.writeFile(chunkPath, chunk);
         }
     }
+
+    /**
+     * Loads all previously saved upload sessions from disk into memory.
+     * Useful for recovering sessions after a restart.
+     * 
+     * @returns A promise that resolves when all sessions are loaded.
+     */
     async loadSessionsFromDisk(): Promise<void> {
         const sessionDirs = await fs.readdir(this.basePath);
         for (const dir of sessionDirs) {
@@ -90,15 +132,29 @@ export class ChunkManager {
         }
     }
 
+    /**
+     * Gets the upload progress as a percentage for a given session ID.
+     * 
+     * @param id - The upload session identifier.
+     * @returns The progress percentage (0 to 100).
+     */
     getProgress(id: string): number {
         const session = this.sessions.get(id);
         if (!session) return 0;
         return (session.receivedChunks.size / session.totalChunks) * 100;
     }
 
+    /**
+    * Finalizes an upload by concatenating all chunks into the final file.
+    * Cleans up temporary chunk files and session metadata afterwards.
+    * 
+    * @param id - The upload session identifier.
+    * @returns A promise that resolves with the path to the final assembled file.
+    * @throws If the session is not found or incomplete.
+    */
     async finalizeUpload(id: string): Promise<string> {
         const session = this.sessions.get(id);
-        if (!session) throw new Error(`Upload session '${id}' not found.`);
+        if (!session) throw new UploadSessionNotFoundError(id)
 
         // In public (simple) mode, we don't know totalChunks so we sort by files
         let chunkIndexes: number[] = [];
@@ -112,7 +168,7 @@ export class ChunkManager {
                 .sort((a, b) => a - b);
         } else {
             if (session.receivedChunks.size !== session.totalChunks) {
-                throw new Error(`Upload session '${id}' is incomplete.`);
+                throw new IncompleteUploadError(id, session.totalChunks, session.receivedChunks.size)
             }
             chunkIndexes = Array.from(session.receivedChunks).sort((a, b) => a - b);
         }
@@ -142,6 +198,12 @@ export class ChunkManager {
         return session.targetPath;
     }
 
+    /**
+     * Aborts an upload session by deleting its metadata and chunk files.
+     * 
+     * @param id - The upload session identifier.
+     * @returns A promise that resolves when the session is aborted and cleaned up.
+     */
     async abortSession(id: string) {
         this.sessions.delete(id);
         await fs.remove(this.getSessionDir(id));
