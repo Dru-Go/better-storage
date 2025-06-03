@@ -1,7 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { Storage, StorageManager } from '../../src/core/StorageManager';
-import { DatePathGenerator, UserPathGenerator } from '../../src/core/PathGenerator';
-import path from 'path';
+import { describe, it, expect } from 'vitest';
+import { Storage } from '../../src/core/StorageManager';
 import { SettingDiskError } from '../../src/errors/storage_error';
 describe('StorageManager', () => {
     it('returns a valid driver from config', () => {
